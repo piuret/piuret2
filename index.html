@@ -1,171 +1,450 @@
-<div id="app" style="font-family: system-ui, sans-serif; max-width: 920px; margin: 0 auto; padding: 16px; color:#1a1a1a;">
-  <h2 style="margin-bottom:4px;">심슨의 역설 시뮬레이터</h2>
-  <p style="color:#555; font-size:14px; margin-top:0;">버튼을 누르면 브라우저에서 직접 무작위 시행을 실행합니다. 코드는 아래 각 단계 설명과 함께 실행 로그로 출력됩니다.</p>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physarum 네트워크 최적화 시뮬레이터</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;}
+body{background:#05050e;font-family:'Courier New',monospace;color:#c0c8e0;height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none;}
+header{padding:10px 20px;border-bottom:1px solid #12122a;display:flex;align-items:baseline;gap:14px;flex-shrink:0;min-width:0;overflow:hidden;background:linear-gradient(to right,#08081a,#05050e);}
+header h1{font-size:1.3rem;letter-spacing:.18em;color:#f5c518;text-shadow:0 0 18px rgba(245,197,24,.5);font-weight:700;flex-shrink:0;}
+header .sub{font-size:.68rem;color:#3a4060;letter-spacing:.06em;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+header .eq{margin-left:auto;font-size:.7rem;color:#2a3050;letter-spacing:.04em;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+header .eq span{color:#3a4870;}
+.main{display:flex;flex:1;min-width:0;overflow:hidden;}
+canvas{flex:1 1 0;min-width:0;width:0;height:100%;cursor:crosshair;display:block;}
+.panel{width:260px;min-width:260px;background:#080818;border-left:1px solid #12122a;overflow-y:auto;flex-shrink:0;padding:14px;display:flex;flex-direction:column;gap:14px;}
+.sec{font-size:.6rem;letter-spacing:.15em;color:#2a3050;text-transform:uppercase;border-bottom:1px solid #12122a;padding-bottom:5px;margin-bottom:8px;}
+.mode-row{display:flex;gap:5px;}
+.mbtn{flex:1;padding:6px 2px;font-size:.68rem;font-family:inherit;background:#0c0c20;border:1px solid #1e1e3a;color:#5060a0;cursor:pointer;border-radius:3px;letter-spacing:.04em;transition:all .15s;}
+.mbtn:hover{background:#141430;border-color:#3a3a60;}
+.mbtn.on{background:#141e38;border-color:#f5c518;color:#f5c518;}
+.srow{display:flex;flex-direction:column;gap:3px;margin-bottom:10px;}
+.slbl{display:flex;justify-content:space-between;align-items:baseline;}
+.sname{font-size:.75rem;color:#9098b8;}
+.ssub{font-size:.6rem;color:#383858;}
+.sval{font-size:.82rem;color:#f5c518;min-width:38px;text-align:right;}
+input[type=range]{width:100%;height:2px;-webkit-appearance:none;background:#141428;outline:none;border-radius:2px;margin-top:3px;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#f5c518;cursor:pointer;box-shadow:0 0 7px rgba(245,197,24,.6);}
+.abtn{width:100%;padding:8px;font-family:inherit;font-size:.75rem;letter-spacing:.07em;border-radius:3px;cursor:pointer;transition:all .15s;border:1px solid;margin-bottom:5px;}
+.run{background:#0e1e08;border-color:#2a5010;color:#6adf30;}.run:hover{background:#182808;border-color:#4a8020;}
+.dij{background:#08141e;border-color:#103040;color:#30b8f0;}.dij:hover{background:#102030;border-color:#205060;}
+.dij.on{background:#0c2a40;border-color:#00d4ff;color:#00d4ff;box-shadow:0 0 8px rgba(0,212,255,.2);}
+.rst{background:#0c0c20;border-color:#1e1e38;color:#6070a0;}.rst:hover{background:#141430;border-color:#3a3a60;color:#a0b0c0;}
+.clr{background:#160810;border-color:#3a1020;color:#e04040;}.clr:hover{background:#200c18;border-color:#5a1828;}
+.pre{background:#0e0e1e;border-color:#2a2a50;color:#8080c0;}.pre:hover{background:#141428;border-color:#4a4a70;color:#a0a0e0;}
+.stats{display:flex;flex-direction:column;gap:6px;}
+.sr{display:flex;justify-content:space-between;align-items:center;font-size:.75rem;}
+.sl{color:#404060;}.sv{color:#b0b8d0;}
+.cbar-wrap{width:100%;height:2px;background:#12122a;border-radius:2px;overflow:hidden;margin-top:2px;}
+.cbar{height:100%;background:linear-gradient(to right,#f5c518,#ff8c00);transition:width .3s;border-radius:2px;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.62rem;letter-spacing:.08em;}
+.idle{background:#12122a;color:#3a4060;border:1px solid #1e1e3a;}
+.running{background:#0e1e08;color:#6adf30;border:1px solid #2a5010;animation:pulse 1.5s infinite;}
+.conv{background:#1a1800;color:#f5c518;border:1px solid #4a3a08;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+.leg{display:flex;flex-direction:column;gap:7px;font-size:.68rem;color:#505070;}
+.li{display:flex;align-items:center;gap:7px;}
+.ld{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.hint{font-size:.64rem;color:#282848;line-height:1.7;letter-spacing:.03em;}
+.hint b{color:#404060;}
+footer{padding:6px 20px;border-top:1px solid #10102a;background:#06060f;flex-shrink:0;display:flex;align-items:center;gap:20px;}
+footer .feq{font-size:.66rem;color:#282848;letter-spacing:.04em;}
+footer .feq span{color:#3a4860;}
+footer .fhint{font-size:.62rem;color:#202038;margin-left:auto;}
+@media (max-width:900px){
+  header .eq{display:none;}
+  .panel{width:240px;min-width:240px;padding:10px;gap:11px;}
+  footer .fhint{display:none;}
+}
+@media (max-width:650px){
+  header .sub{display:none;}
+  .panel{width:210px;min-width:210px;}
+}
+</style>
+</head>
+<body>
 
-  <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:12px 0;">
-    <label>시행 횟수:
-      <input id="nTrials" type="number" value="100000" min="1000" max="1000000" step="1000" style="width:100px; padding:4px;">
-    </label>
-    <button id="runBtn" style="padding:8px 16px; background:#4C72B0; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">시뮬레이션 실행</button>
-    <span id="status" style="font-size:13px; color:#777;"></span>
+<header>
+  <h1>PHYSARUM</h1>
+  <span class="sub">Physarum polycephalum &middot; Tero-Nakagaki ODE &middot; 네트워크 최적화 시뮬레이터</span>
+  <span class="eq">dD<sub>ij</sub>/dt = |Q<sub>ij</sub>|<sup>&gamma;</sup> &minus; r&middot;D<sub>ij</sub> &nbsp;|&nbsp; Q<sub>ij</sub> = (D<sub>ij</sub>/L<sub>ij</sub>)(p<sub>i</sub>&minus;p<sub>j</sub>)</span>
+</header>
+
+<div class="main">
+<canvas id="cv"></canvas>
+
+<div class="panel">
+  <div>
+    <div class="sec">상태</div>
+    <span id="badge" class="badge idle">대기 중</span>
   </div>
 
-  <div id="stats" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-bottom:16px;"></div>
+  <div>
+    <div class="sec">노드 배치 모드</div>
+    <div class="mode-row">
+      <button class="mbtn on" id="mS" onclick="setMode('S')">S 출발</button>
+      <button class="mbtn" id="mT" onclick="setMode('T')">T 도착</button>
+      <button class="mbtn" id="mN" onclick="setMode('N')">+ 중간</button>
+    </div>
+    <div class="hint" style="margin-top:6px"><b>S</b>=출발 &nbsp;<b>T</b>=도착 &nbsp;<b>+</b>=경유점<br>캔버스 클릭으로 배치</div>
+  </div>
 
-  <h3>1. α–β 평면에서 역전 발생 지점 (표본 5,000개)</h3>
-  <canvas id="scatter" width="480" height="480" style="border:1px solid #ddd; max-width:100%;"></canvas>
+  <div>
+    <div class="sec">파라미터</div>
+    <div class="srow">
+      <div class="slbl"><span class="sname">&gamma; 강화 지수</span><span class="sval" id="vG">1.0</span></div>
+      <div class="ssub">유량 &rarr; 전도도 강화 비율</div>
+      <input type="range" min=".3" max="3" step=".1" value="1" oninput="gamma=+this.value;document.getElementById('vG').textContent=gamma.toFixed(1)">
+    </div>
+    <div class="srow">
+      <div class="slbl"><span class="sname">r 감쇠 계수</span><span class="sval" id="vR">1.0</span></div>
+      <div class="ssub">미사용 관의 소멸 속도</div>
+      <input type="range" min=".1" max="3" step=".1" value="1" oninput="r=+this.value;document.getElementById('vR').textContent=r.toFixed(1)">
+    </div>
+    <div class="srow">
+      <div class="slbl"><span class="sname">dt 시간 간격</span><span class="sval" id="vDT">0.010</span></div>
+      <div class="ssub">수치해석 스텝 크기 (오일러법)</div>
+      <input type="range" min=".001" max=".05" step=".001" value=".01" oninput="dt=+this.value;document.getElementById('vDT').textContent=dt.toFixed(3)">
+    </div>
+    <div class="srow">
+      <div class="slbl"><span class="sname">속도</span><span class="sval" id="vSP">10</span></div>
+      <div class="ssub">프레임당 스텝 수</div>
+      <input type="range" min="1" max="60" step="1" value="10" oninput="spf=+this.value;document.getElementById('vSP').textContent=spf">
+    </div>
+  </div>
 
-  <h3>2. 역전 발생 빈도</h3>
-  <canvas id="bar" width="480" height="320" style="border:1px solid #ddd; max-width:100%;"></canvas>
+  <div>
+    <div class="sec">제어</div>
+    <button class="abtn run" id="runBtn" onclick="toggleRun()">&#9654; 시뮬레이션 실행</button>
+    <button class="abtn dij" id="dijBtn" onclick="toggleDij()">&#9672; Dijkstra 비교 오버레이</button>
+    <button class="abtn pre" onclick="loadPreset()">&#9733; 예시 그래프 로드</button>
+    <button class="abtn rst" onclick="resetSim()">&#8635; 전도도 초기화</button>
+    <button class="abtn clr" onclick="clearAll()">&#10005; 전체 삭제</button>
+  </div>
 
-  <h3>3. AI 분류 정확도 역전 영역 (p1=0.9, p2=0.4, q1=0.8, q2=0.3 고정)</h3>
-  <canvas id="heatmap" width="480" height="480" style="border:1px solid #ddd; max-width:100%;"></canvas>
+  <div>
+    <div class="sec">실시간 통계</div>
+    <div class="stats">
+      <div class="sr"><span class="sl">노드 수</span><span class="sv" id="sN">0</span></div>
+      <div class="sr"><span class="sl">엣지 수</span><span class="sv" id="sE">0</span></div>
+      <div class="sr"><span class="sl">시뮬레이션 스텝</span><span class="sv" id="sST">0</span></div>
+      <div class="sr"><span class="sl">최대 &Delta;D (수렴 지표)</span><span class="sv" id="sC">&mdash;</span></div>
+      <div class="cbar-wrap"><div class="cbar" id="cbar" style="width:0%"></div></div>
+      <div class="sr"><span class="sl">수렴 상태</span><span class="sv" id="sCV">&mdash;</span></div>
+    </div>
+  </div>
 
-  <pre id="log" style="background:#f5f5f5; padding:10px; font-size:12px; white-space:pre-wrap; border-radius:6px; margin-top:16px;"></pre>
+  <div>
+    <div class="sec">범례</div>
+    <div class="leg">
+      <div class="li"><div class="ld" style="background:#00ff88;box-shadow:0 0 5px #00ff88"></div>출발 노드 S (source, +I&#8320;)</div>
+      <div class="li"><div class="ld" style="background:#ff4444;box-shadow:0 0 5px #ff4444"></div>도착 노드 T (sink, &minus;I&#8320;)</div>
+      <div class="li"><div class="ld" style="background:#6080b0"></div>중간 노드 (경유)</div>
+      <div class="li"><div class="ld" style="background:#f5c518;box-shadow:0 0 5px #f5c518;border-radius:2px"></div>Physarum 관 (굵기&#8733;D)</div>
+      <div class="li"><div class="ld" style="background:#00d4ff;box-shadow:0 0 5px #00d4ff;border-radius:2px"></div>Dijkstra 최단 경로</div>
+    </div>
+  </div>
+
+  <div class="hint">
+    <b>탐구 포인트:</b><br>
+    &gamma;&uarr; &rarr; 강한 경로에 더 집중<br>
+    r&uarr; &rarr; 약한 관 빠르게 소멸<br>
+    dt&uarr; &rarr; 빠르지만 불안정 가능<br><br>
+    Dijkstra(유클리드 거리 기반)와<br>
+    Physarum(에너지 최소화 기반) 비교
+  </div>
+</div>
 </div>
 
+<footer>
+  <span class="feq">Poiseuille: <span>Q_ij = D_ij/L_ij &middot; (p_i &minus; p_j)</span></span>
+  <span class="feq">KCL: <span>&Sigma; Q_ij = b_i</span></span>
+  <span class="feq">ODE: <span>dD_ij/dt = |Q_ij|^&gamma; &minus; r&middot;D_ij</span></span>
+  <span class="fhint">수치해석: Forward Euler &middot; Weighted Laplacian &middot; Gaussian Elimination</span>
+</footer>
+
 <script>
-const logEl = document.getElementById('log');
-function log(msg){ logEl.textContent += msg + "\n"; }
+const cv=document.getElementById('cv');
+const cx=cv.getContext('2d');
 
-function rand(){ return Math.random(); }
+let nodes=[],edges=[],D=[];
+let srcIdx=-1,snkIdx=-1;
+let gamma=1,r=1,dt=.01,spf=10;
+let running=false,showDij=false,mode='S';
+let steps=0,maxDD=0,dijPath=[],raf=null;
 
-function runSimulation(N){
-  logEl.textContent = "";
-  document.getElementById('status').textContent = "실행 중...";
+function cW(){return cv.getBoundingClientRect().width;}
+function cH(){return cv.getBoundingClientRect().height;}
 
-  // ---- 1단계: 조건 만족하는 (p1,p2,q1,q2) 생성 ----
-  const p1=[], p2=[], q1=[], q2=[];
-  let attempts = 0;
-  while(p1.length < N){
-    attempts++;
-    const a=rand(), b=rand(), c=rand(), d=rand();
-    if(a>c && b>d && a>b && c>d){
-      p1.push(a); p2.push(b); q1.push(c); q2.push(d);
+function resize(){
+  const rect=cv.getBoundingClientRect();
+  const dpr=devicePixelRatio||1;
+  cv.width=rect.width*dpr;
+  cv.height=rect.height*dpr;
+  cx.scale(dpr,dpr);
+  draw();
+}
+window.addEventListener('resize',resize);
+
+function ndist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+
+function rebuild(){
+  edges=[];
+  for(let i=0;i<nodes.length;i++)
+    for(let j=i+1;j<nodes.length;j++)
+      edges.push([i,j]);
+  D=edges.map(()=>0.4+Math.random()*.2);
+  steps=0;dijPath=[];updateUI();
+}
+
+function solveGauss(A,b){
+  const n=b.length;
+  const M=A.map((row,i)=>[...row,b[i]]);
+  for(let c=0;c<n;c++){
+    let mx=c;
+    for(let rr=c+1;rr<n;rr++) if(Math.abs(M[rr][c])>Math.abs(M[mx][c])) mx=rr;
+    [M[c],M[mx]]=[M[mx],M[c]];
+    if(Math.abs(M[c][c])<1e-12) continue;
+    const pv=M[c][c];
+    for(let rr=c+1;rr<n;rr++){
+      const f=M[rr][c]/pv;
+      for(let k=c;k<=n;k++) M[rr][k]-=f*M[c][k];
     }
   }
-  log(`[1단계] 조건 만족 4개조 획득: ${N}개 (시도 ${attempts}회, 채택률 ${(N/attempts*100).toFixed(3)}%)`);
-
-  // ---- 2단계: 가중치 alpha, beta 생성, 전체 성공률 계산 ----
-  const alpha = new Float64Array(N), beta = new Float64Array(N);
-  const PSA = new Float64Array(N), PSB = new Float64Array(N);
-  const reversal = new Uint8Array(N);
-  let nRev = 0;
-  for(let i=0;i<N;i++){
-    alpha[i]=rand(); beta[i]=rand();
-    PSA[i] = alpha[i]*p1[i] + (1-alpha[i])*p2[i];
-    PSB[i] = beta[i]*q1[i] + (1-beta[i])*q2[i];
-    // ---- 3단계: 역전 판정 ----
-    const rev = PSA[i] < PSB[i];
-    reversal[i] = rev ? 1 : 0;
-    if(rev) nRev++;
+  const x=new Array(n).fill(0);
+  for(let i=n-1;i>=0;i--){
+    if(Math.abs(M[i][i])<1e-12) continue;
+    let s=M[i][n];
+    for(let k=i+1;k<n;k++) s-=M[i][k]*x[k];
+    x[i]=s/M[i][i];
   }
-  const rate = nRev/N;
-  log(`[3단계] 역전 발생: ${nRev.toLocaleString()}회 / ${N.toLocaleString()}회 (발생률 ${(rate*100).toFixed(3)}%)`);
-
-  // ---- 4단계: 이론식 검증 (부등식: alpha*(p1-p2) - beta*(q1-q2) < q2-p2) ----
-  let matchCount = 0;
-  for(let i=0;i<N;i++){
-    const lhs = alpha[i]*(p1[i]-p2[i]) - beta[i]*(q1[i]-q2[i]);
-    const rhs = q2[i]-p2[i];
-    const revTheory = lhs < rhs;
-    if((revTheory?1:0) === reversal[i]) matchCount++;
-  }
-  const matchRate = matchCount/N;
-  log(`[4단계] 이론식-시뮬레이션 판정 일치율: ${(matchRate*100).toFixed(4)}%`);
-
-  document.getElementById('stats').innerHTML = `
-    <div style="background:#eef2f8;padding:10px;border-radius:6px;"><b>${N.toLocaleString()}</b><br><span style="font-size:12px;color:#666;">총 시행</span></div>
-    <div style="background:#fbeaea;padding:10px;border-radius:6px;"><b>${nRev.toLocaleString()}</b><br><span style="font-size:12px;color:#666;">역전 발생 횟수</span></div>
-    <div style="background:#fbeaea;padding:10px;border-radius:6px;"><b>${(rate*100).toFixed(3)}%</b><br><span style="font-size:12px;color:#666;">역전 발생률</span></div>
-    <div style="background:#e8f5e9;padding:10px;border-radius:6px;"><b>${(matchRate*100).toFixed(4)}%</b><br><span style="font-size:12px;color:#666;">이론식 일치율</span></div>
-  `;
-
-  drawScatter(alpha, beta, reversal, N);
-  drawBar(N, nRev);
-  drawHeatmap();
-  document.getElementById('status').textContent = "완료";
+  return x;
 }
 
-function drawScatter(alpha, beta, reversal, N){
-  const c = document.getElementById('scatter'), ctx = c.getContext('2d');
-  ctx.clearRect(0,0,c.width,c.height);
-  const pad=40, W=c.width-pad*1.5, H=c.height-pad*1.5;
-  ctx.strokeStyle="#333"; ctx.beginPath();
-  ctx.moveTo(pad,pad); ctx.lineTo(pad,pad+H); ctx.lineTo(pad+W,pad+H); ctx.stroke();
-  ctx.font="12px sans-serif"; ctx.fillStyle="#333";
-  ctx.fillText("α", pad+W/2, pad+H+22);
-  ctx.save(); ctx.translate(12,pad+H/2); ctx.rotate(-Math.PI/2); ctx.fillText("β",0,0); ctx.restore();
-
-  const sampleSize = Math.min(5000, N);
-  const step = Math.max(1, Math.floor(N/sampleSize));
-  for(let i=0;i<N;i+=step){
-    const x = pad + alpha[i]*W;
-    const y = pad + (1-beta[i])*H;
-    ctx.fillStyle = reversal[i] ? "rgba(196,78,82,0.7)" : "rgba(76,114,176,0.35)";
-    ctx.beginPath(); ctx.arc(x,y,2,0,7); ctx.fill();
-  }
-  ctx.fillStyle="#C44E52"; ctx.fillText("● 역전 발생", pad+W-110, pad+14);
-  ctx.fillStyle="#4C72B0"; ctx.fillText("● 역전 없음", pad+W-110, pad+30);
-}
-
-function drawBar(N, nRev){
-  const c = document.getElementById('bar'), ctx = c.getContext('2d');
-  ctx.clearRect(0,0,c.width,c.height);
-  const pad=50, W=c.width-pad*1.5, H=c.height-pad*1.5;
-  const vals=[N-nRev, nRev], labels=["역전 없음","역전 발생"], colors=["#4C72B0","#C44E52"];
-  const maxV = N;
-  const bw = W/3;
-  vals.forEach((v,i)=>{
-    const bh = (v/maxV)*H;
-    const x = pad + i*W/2 + W/4 - bw/2;
-    const y = pad + H - bh;
-    ctx.fillStyle=colors[i];
-    ctx.fillRect(x,y,bw,bh);
-    ctx.fillStyle="#333"; ctx.font="12px sans-serif"; ctx.textAlign="center";
-    ctx.fillText(`${v.toLocaleString()} (${(v/N*100).toFixed(2)}%)`, x+bw/2, y-8);
-    ctx.fillText(labels[i], x+bw/2, pad+H+18);
+function simStep(){
+  const n=nodes.length;
+  if(n<2||srcIdx<0||snkIdx<0) return;
+  const L=Array.from({length:n},()=>new Array(n).fill(0));
+  edges.forEach(([i,j],k)=>{
+    const len=Math.max(ndist(nodes[i],nodes[j]),1);
+    const w=D[k]/len;
+    L[i][i]+=w;L[j][j]+=w;L[i][j]-=w;L[j][i]-=w;
   });
-  ctx.textAlign="left";
-  ctx.strokeStyle="#333"; ctx.beginPath();
-  ctx.moveTo(pad,pad); ctx.lineTo(pad,pad+H); ctx.lineTo(pad+W,pad+H); ctx.stroke();
+  const b=new Array(n).fill(0);
+  b[srcIdx]=1;
+  L[snkIdx]=new Array(n).fill(0);
+  L[snkIdx][snkIdx]=1;
+  b[snkIdx]=0;
+  const p=solveGauss(L,b);
+  let md=0;
+  edges.forEach(([i,j],k)=>{
+    const len=Math.max(ndist(nodes[i],nodes[j]),1);
+    const Q=D[k]/len*(p[i]-p[j]);
+    const aQ=Math.abs(Q);
+    const dD=Math.pow(aQ+1e-9,gamma)-r*D[k];
+    const delta=dt*dD;
+    D[k]+=delta;
+    D[k]=Math.max(D[k],1e-6);
+    md=Math.max(md,Math.abs(delta));
+  });
+  maxDD=md;steps++;
 }
 
-function drawHeatmap(){
-  const c = document.getElementById('heatmap'), ctx = c.getContext('2d');
-  const p1=0.9, p2=0.4, q1=0.8, q2=0.3;
-  const pad=40, W=c.width-pad*1.5, H=c.height-pad*1.5;
-  const res=100;
-  for(let ix=0; ix<res; ix++){
-    for(let iy=0; iy<res; iy++){
-      const a = ix/(res-1), b = 1-(iy/(res-1));
-      const PSA = a*p1+(1-a)*p2, PSB = b*q1+(1-b)*q2;
-      const rev = PSA < PSB;
-      ctx.fillStyle = rev ? "#8B2E3F" : "#2E5D8B";
-      ctx.fillRect(pad + ix*W/res, pad + iy*H/res, W/res+1, H/res+1);
+function runDijkstra(){
+  if(srcIdx<0||snkIdx<0||nodes.length<2){dijPath=[];return;}
+  const n=nodes.length;
+  const dist=new Array(n).fill(Infinity);
+  const prev=new Array(n).fill(-1);
+  const vis=new Array(n).fill(false);
+  dist[srcIdx]=0;
+  for(let it=0;it<n;it++){
+    let u=-1;
+    for(let v=0;v<n;v++) if(!vis[v]&&(u<0||dist[v]<dist[u])) u=v;
+    if(u<0||dist[u]===Infinity) break;
+    vis[u]=true;
+    if(u===snkIdx) break;
+    edges.forEach(([i,j])=>{
+      const d=ndist(nodes[i],nodes[j]);
+      if(i===u&&dist[u]+d<dist[j]){dist[j]=dist[u]+d;prev[j]=u;}
+      else if(j===u&&dist[u]+d<dist[i]){dist[i]=dist[u]+d;prev[i]=u;}
+    });
+  }
+  dijPath=[];
+  let c=snkIdx;
+  while(c>=0){dijPath.unshift(c);c=prev[c];}
+  if(dijPath[0]!==srcIdx) dijPath=[];
+}
+
+function draw(){
+  const w=cW(),h=cH();
+  cx.clearRect(0,0,w,h);
+  cx.fillStyle='#05050e';cx.fillRect(0,0,w,h);
+  cx.strokeStyle='rgba(14,14,38,.6)';cx.lineWidth=.4;
+  for(let x=0;x<w;x+=55){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,h);cx.stroke();}
+  for(let y=0;y<h;y+=55){cx.beginPath();cx.moveTo(0,y);cx.lineTo(w,y);cx.stroke();}
+  if(!nodes.length){
+    cx.fillStyle='#181830';cx.font='13px Courier New';cx.textAlign='center';
+    cx.fillText('S 출발 노드를 선택하고 캔버스를 클릭하세요',w/2,h/2);
+    cx.textAlign='left';return;
+  }
+  if(edges.length){
+    const maxD=Math.max(...D,.01);
+    for(let pass=0;pass<2;pass++){
+      edges.forEach(([i,j],k)=>{
+        const nm=D[k]/maxD;
+        if(pass===0&&nm>.25) return;
+        if(pass===1&&nm<=.25) return;
+        const alpha=.03+nm*.97;
+        const lw=.15+nm*11;
+        const rc=Math.round(150+nm*105);
+        const gc=Math.round(50+nm*150);
+        const bc=Math.round(nm*10);
+        if(pass===1){cx.shadowBlur=4+nm*24;cx.shadowColor='rgba(245,197,24,'+(nm*.75)+')';}
+        cx.strokeStyle='rgba('+rc+','+gc+','+bc+','+alpha+')';
+        cx.lineWidth=lw;cx.lineCap='round';
+        cx.beginPath();cx.moveTo(nodes[i].x,nodes[i].y);cx.lineTo(nodes[j].x,nodes[j].y);cx.stroke();
+        if(pass===1){cx.shadowBlur=0;cx.shadowColor='transparent';}
+      });
     }
   }
-  // 이론적 경계선 beta = alpha + 0.2
-  ctx.strokeStyle="#000"; ctx.setLineDash([6,4]); ctx.lineWidth=2;
-  ctx.beginPath();
-  const a0=0, b0=0.2, a1=0.8, b1=1.0;
-  ctx.moveTo(pad+a0*W, pad+(1-b0)*H);
-  ctx.lineTo(pad+a1*W, pad+(1-b1)*H);
-  ctx.stroke(); ctx.setLineDash([]);
-
-  ctx.strokeStyle="#333"; ctx.lineWidth=1; ctx.beginPath();
-  ctx.moveTo(pad,pad); ctx.lineTo(pad,pad+H); ctx.lineTo(pad+W,pad+H); ctx.stroke();
-  ctx.font="12px sans-serif"; ctx.fillStyle="#333";
-  ctx.fillText("α (그룹1 가중치, A모델)", pad+W/2-70, pad+H+22);
-  ctx.save(); ctx.translate(12,pad+H/2); ctx.rotate(-Math.PI/2); ctx.fillText("β (그룹1 가중치, B모델)",-70,0); ctx.restore();
-  ctx.fillStyle="#000"; ctx.fillText("- - 이론 경계선: β = α + 0.2", pad+10, pad+16);
+  if(showDij&&dijPath.length>=2){
+    cx.shadowBlur=14;cx.shadowColor='rgba(0,212,255,.8)';
+    cx.strokeStyle='#00d4ff';cx.lineWidth=2.5;
+    cx.setLineDash([9,4]);cx.lineCap='round';
+    cx.beginPath();cx.moveTo(nodes[dijPath[0]].x,nodes[dijPath[0]].y);
+    for(let i=1;i<dijPath.length;i++) cx.lineTo(nodes[dijPath[i]].x,nodes[dijPath[i]].y);
+    cx.stroke();cx.setLineDash([]);cx.shadowBlur=0;
+  }
+  nodes.forEach((nd,i)=>{
+    let col,glow,lbl,sz;
+    if(i===srcIdx){col='#00ff88';glow='rgba(0,255,136,.7)';lbl='S';sz=9;}
+    else if(i===snkIdx){col='#ff4444';glow='rgba(255,68,68,.7)';lbl='T';sz=9;}
+    else{col='#6080b0';glow='rgba(96,128,176,.4)';lbl=String.fromCharCode(65+i);sz=7;}
+    cx.shadowBlur=14;cx.shadowColor=glow;
+    cx.fillStyle=col;cx.beginPath();cx.arc(nd.x,nd.y,sz,0,Math.PI*2);cx.fill();
+    cx.shadowBlur=0;
+    cx.strokeStyle='#05050e';cx.lineWidth=1.8;cx.stroke();
+    cx.fillStyle='#05050e';
+    cx.font='bold '+(i===srcIdx||i===snkIdx?9:8)+'px Courier New';
+    cx.textAlign='center';cx.textBaseline='middle';
+    cx.fillText(lbl,nd.x,nd.y);
+  });
+  cx.textAlign='left';cx.textBaseline='alphabetic';
 }
 
-document.getElementById('runBtn').addEventListener('click', () => {
-  const N = parseInt(document.getElementById('nTrials').value) || 100000;
-  setTimeout(() => runSimulation(N), 10);
+function updateUI(){
+  document.getElementById('sN').textContent=nodes.length;
+  document.getElementById('sE').textContent=edges.length;
+  document.getElementById('sST').textContent=steps.toLocaleString();
+  if(steps>0){
+    document.getElementById('sC').textContent=maxDD.toExponential(2);
+    document.getElementById('cbar').style.width=Math.min(100,maxDD*8000)+'%';
+    const conv=maxDD<1e-4;
+    document.getElementById('sCV').textContent=conv?'✓ 수렴 완료':'진행 중...';
+    if(conv&&running) stopSim('conv');
+  } else {
+    document.getElementById('sC').textContent='—';
+    document.getElementById('sCV').textContent='—';
+  }
+}
+
+function setBadge(s){
+  const el=document.getElementById('badge');
+  el.className='badge';
+  if(s==='idle'){el.classList.add('idle');el.textContent='대기 중';}
+  else if(s==='run'){el.classList.add('running');el.textContent='실행 중';}
+  else{el.classList.add('conv');el.textContent='수렴 완료';}
+}
+
+function loop(){
+  if(!running) return;
+  for(let s=0;s<spf;s++) simStep();
+  if(showDij) runDijkstra();
+  draw();updateUI();
+  raf=requestAnimationFrame(loop);
+}
+
+function stopSim(reason){
+  running=false;
+  if(raf) cancelAnimationFrame(raf);
+  document.getElementById('runBtn').textContent='▶ 시뮬레이션 실행';
+  setBadge(reason==='conv'?'conv':'idle');
+}
+
+function toggleRun(){
+  if(!nodes.length||srcIdx<0||snkIdx<0){alert('S(출발)과 T(도착) 노드를 먼저 배치하세요.');return;}
+  if(running){stopSim('idle');}
+  else{running=true;document.getElementById('runBtn').textContent='⏸ 시뮬레이션 정지';setBadge('run');loop();}
+}
+
+function toggleDij(){
+  showDij=!showDij;
+  document.getElementById('dijBtn').classList.toggle('on',showDij);
+  if(showDij) runDijkstra();
+  draw();
+}
+
+function resetSim(){
+  stopSim('idle');steps=0;maxDD=0;dijPath=[];
+  D=edges.map(()=>0.4+Math.random()*.2);
+  updateUI();draw();
+}
+
+function clearAll(){
+  stopSim('idle');
+  nodes=[];edges=[];D=[];srcIdx=-1;snkIdx=-1;
+  steps=0;maxDD=0;dijPath=[];showDij=false;
+  document.getElementById('dijBtn').classList.remove('on');
+  updateUI();draw();
+}
+
+function setMode(m){
+  mode=m;
+  ['S','T','N'].forEach(x=>document.getElementById('m'+x).classList.remove('on'));
+  document.getElementById('m'+m).classList.add('on');
+}
+
+function loadPreset(){
+  clearAll();
+  const w=cW(),h=cH();
+  const pts=[
+    {x:w*.18,y:h*.5,t:'S'},
+    {x:w*.82,y:h*.5,t:'T'},
+    {x:w*.35,y:h*.22,t:'N'},
+    {x:w*.65,y:h*.22,t:'N'},
+    {x:w*.35,y:h*.78,t:'N'},
+    {x:w*.65,y:h*.78,t:'N'},
+    {x:w*.5,y:h*.45,t:'N'},
+  ];
+  pts.forEach((p,i)=>{
+    if(p.t==='S') srcIdx=i;
+    else if(p.t==='T') snkIdx=i;
+    nodes.push({x:p.x,y:p.y,type:p.t});
+  });
+  rebuild();draw();
+}
+
+cv.addEventListener('click',e=>{
+  const rect=cv.getBoundingClientRect();
+  const x=e.clientX-rect.left,y=e.clientY-rect.top;
+  if(mode==='S'){
+    if(srcIdx>=0) nodes[srcIdx].type='N';
+    srcIdx=nodes.length;nodes.push({x,y,type:'S'});
+  } else if(mode==='T'){
+    if(snkIdx>=0) nodes[snkIdx].type='N';
+    snkIdx=nodes.length;nodes.push({x,y,type:'T'});
+  } else {
+    nodes.push({x,y,type:'N'});
+  }
+  rebuild();
+  if(showDij) runDijkstra();
+  draw();updateUI();
 });
 
-// 초기 1회 자동 실행
-runSimulation(100000);
+resize();
 </script>
+</body>
+</html>
